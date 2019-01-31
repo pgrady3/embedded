@@ -24,7 +24,7 @@
 #define HALL_2_PIN A2
 #define HALL_3_PIN A3
 
-#define HALL_OVERSAMPLE 8
+#define HALL_OVERSAMPLE 4
 
 //uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};
 uint8_t hallToMotor[8] = {255, 3, 5, 4, 1, 2, 0, 255}; 
@@ -46,8 +46,8 @@ void setup() {
   TCCR1A = (1<<COM1A1) | (1<<COM1B1) | (1<<WGM10);//phase correct 8 bit
   TCCR2A = (1<<COM2B1) | (1<<WGM20);
   
-  TCCR1B = (1<<CS11);
-  TCCR2B = (1<<CS21); //8 prescaler
+  TCCR1B = (1<<CS10);
+  TCCR2B = (1<<CS20); //no prescaler, pwm at 32khz
 
   TCNT2 = 0;
   TCNT1 = 0;
