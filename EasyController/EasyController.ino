@@ -24,9 +24,10 @@
 #define HALL_2_PIN A2
 #define HALL_3_PIN A3
 
-#define HALL_OVERSAMPLE 2
+#define HALL_OVERSAMPLE 8
 
-uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};
+//uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};
+uint8_t hallToMotor[8] = {255, 3, 5, 4, 1, 2, 0, 255}; 
 
 void setup() {
   Serial.begin(115200);
@@ -42,29 +43,31 @@ void setup() {
   pinMode(HALL_2_PIN, INPUT);
   pinMode(HALL_3_PIN, INPUT);
 
-  TCCR1A = (1<<COM1A1) | (1<<COM1B1) | (1<<WGM10);
-  TCCR2A = (1<<COM2B1) | (1<<WGM21) | (1<<WGM20);
+  TCCR1A = (1<<COM1A1) | (1<<COM1B1) | (1<<WGM10);//phase correct 8 bit
+  TCCR2A = (1<<COM2B1) | (1<<WGM20);
   
-  TCCR1B = (1<<WGM12) | (1<<CS11);
+  TCCR1B = (1<<CS11);
   TCCR2B = (1<<CS21); //8 prescaler
 
-  identifyHalls();
+  TCNT2 = 0;
+  TCNT1 = 0;
+  
+  //identifyHalls();
 }
 
 void loop() {
-  static uint8_t oldState = 0;
   uint8_t hall = getHalls();
-  uint8_t throttle = readThrottle();
+  static uint8_t throttle = readThrottle();
+  static uint8_t i = 0;
+
+  if(i == 0)
+    throttle = readThrottle();
+  
+  i++;
   
   uint8_t motorState = hallToMotor[hall];
 
-  //if(motorState != oldState)
-  //  Serial.println(motorState);
-  
-  oldState = motorState;
-  
   writePWM(motorState, throttle);
-  delayMicroseconds(100);
 }
 
 void identifyHalls()
@@ -142,9 +145,9 @@ uint8_t getHalls()
   uint8_t hallCounts[] = {0, 0, 0};
   for(uint8_t i = 0; i < HALL_OVERSAMPLE; i++) //read all the hall pins repeatedly, tally results 
   {
-    hallCounts[0] += digitalRead(HALL_1_PIN);
-    hallCounts[1] += digitalRead(HALL_2_PIN);
-    hallCounts[2] += digitalRead(HALL_3_PIN);
+    hallCounts[0] += (PINC >> 1) & 0x01;
+    hallCounts[1] += (PINC >> 2) & 0x01;
+    hallCounts[2] += (PINC >> 3) & 0x01;
   }
 
   uint8_t hall = 0;
@@ -158,6 +161,12 @@ uint8_t getHalls()
 
   return hall & 0x7;
 }
+
+/*uint8_t getHallsSimple()
+{
+  uint8_t hall = PINC >> 1;
+  return hall & 0x7;
+}*/
 
 uint8_t readThrottle()
 {
