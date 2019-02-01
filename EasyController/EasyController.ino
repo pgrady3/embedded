@@ -52,52 +52,40 @@ void setup() {
   TCNT2 = 0;
   TCNT1 = 0;
   
-  //identifyHalls();
+  identifyHalls();
 }
 
 void loop() {
-  uint8_t hall = getHalls();
-  static uint8_t throttle = readThrottle();
-  static uint8_t i = 0;
-
-  if(i == 0)
-    throttle = readThrottle();
-  
-  i++;
-  
-  uint8_t motorState = hallToMotor[hall];
-
-  writePWM(motorState, throttle);
+  uint8_t throttle = readThrottle();//only do this occasionally because its slow
+  for(uint8_t i = 0; i < 200; i++)
+  {  
+    uint8_t hall = getHalls();
+    uint8_t motorState = hallToMotor[hall];
+    writePWM(motorState, throttle);
+  }
 }
 
 void identifyHalls()
 {
-  uint8_t motorToHall[6];
-  
   for(uint8_t i = 0; i < 6; i++)
   {
-    writePWM(i, 15);
-    delay(500);
-    uint8_t halls = getHalls();
-    motorToHall[i] = halls;
-
-    hallToMotor[halls] = (i + 2) % 6;
+    uint8_t prevState = (i + 1) % 6;
+    for(uint8_t j = 0; j < 50; j++)
+    {
+      delay(10);
+      writePWM(i, 20);
+      delay(10);
+      writePWM(prevState, 20);
+    }
+    hallToMotor[getHalls()] = (i + 2) % 6;
   }
   
   writePWM(0, 0);//turn phases off
-
-  for(uint8_t i = 0; i < 6; i++)
-  {
-    Serial.print(motorToHall[i]);
-    Serial.print(" ");
-  }
-  Serial.println();
-
   
   for(uint8_t i = 0; i < 8; i++)
   {
     Serial.print(hallToMotor[i]);
-    Serial.print(" ");
+    Serial.print(", ");
   }
   Serial.println();
 
