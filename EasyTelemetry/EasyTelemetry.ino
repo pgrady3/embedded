@@ -5,7 +5,6 @@
 
 #define LED1 21
 #define LED2 22
-#define LED3 13
 
 #define HALL 4
 #define SD_CS 8
@@ -48,17 +47,15 @@ void setup() {
 
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
-  pinMode(LED3, OUTPUT);
 
   digitalWrite(LED1, HIGH);
   digitalWrite(LED2, HIGH);
-  digitalWrite(LED3, HIGH);
 
   pinMode(HALL, INPUT_PULLUP);
   attachInterrupt(HALL, countHallPulse, FALLING);
 
   myFile = SD.open("data.txt", FILE_WRITE);
-
+  
   GPSInit();
 }
 
@@ -146,32 +143,8 @@ void writeToBtSd() {
   
   Serial.println(outputStr);//usb  
   GPSPoll();//super hacky bc short GPS buffer
+  
   uint32_t startTime = micros();
-  /*myFile = SD.open("data1.txt", FILE_WRITE);
-
-  if(myFile)
-    Serial.println("File good");
-  else
-    Serial.println("File bad");
-
   myFile.println(outputStr);
   myFile.flush();
-  myFile.close();
-
-  Serial.println(micros() - startTime);*/
-
-  File dataFile = SD.open("data.txt", FILE_WRITE);
-
-  // if the file is available, write to it:
-  if (dataFile) {
-    dataFile.println("hi");
-    dataFile.close();
-    // print to the serial port too:
-    Serial.println("hi");
-  }  
-  // if the file isn't open, pop up an error:
-  else {
-    Serial.println("error opening datalog.txt");
-  } 
 }
-
