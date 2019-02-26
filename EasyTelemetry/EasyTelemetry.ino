@@ -1,6 +1,7 @@
 #include <i2c_t3.h>
 #include <SD.h>
 #include "Adafruit_GPS.h"
+#include "LiquidCrystal_I2C.h"
 #include "INA.h"
 
 #define LED1 21
@@ -35,19 +36,20 @@ double batteryVoltage = 0.0;
 
 File myFile;
 Adafruit_GPS GPS(&Serial1);
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 void setup() {
   Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
   INAinit();
 
   Serial.begin(115200);
-  
   SD.begin(SD_CS);
-  delay(100);
+  lcd.begin();
+  lcd.backlight();
+  lcd.print("Hello, world!");
 
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
-
   digitalWrite(LED1, HIGH);
   digitalWrite(LED2, HIGH);
 
@@ -58,7 +60,6 @@ void setup() {
   
   GPSInit();
 }
-
 
 void loop() {  
   GPSPoll();//must be called rapidly
@@ -140,11 +141,25 @@ void writeToBtSd() {
                      String(energyUsed) + " " + String(distance) + " " + String(millis()) + " " + String(GPS.latitudeDegrees, 7) + 
                      " " + String(GPS.longitudeDegrees, 7);
   
-  
   Serial.println(outputStr);//usb  
   GPSPoll();//super hacky bc short GPS buffer
   
-  uint32_t startTime = micros();
+
   myFile.println(outputStr);
-  myFile.flush();
+  myFile.flush();//need this to make sure we actually write to card and don't buffer
+
+  GPSPoll();//super hacky bc short GPS buffer
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(InaVoltage);
+  lcd.print(" V");
+  
+  lcd.setCursor(0, 1);
+  lcd.print(InaCurrent);
+  lcd.print(" A");
+  
+  lcd.setCursor(0, 2);
+  lcd.print(millis() / 1000);
+  lcd.print(" s");
 }
