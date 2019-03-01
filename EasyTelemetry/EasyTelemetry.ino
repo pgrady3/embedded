@@ -156,7 +156,7 @@ void writeToBtSd() {
                      " " + String(GPS.longitudeDegrees, 7);
   
   Serial.println(outputStr);//usb 
-  Serial.println(GPS.milliseconds); 
+  //Serial.println(GPS.milliseconds); 
   GPSPoll();//super hacky bc short GPS buffer
   
   myFile.println(outputStr);
@@ -178,5 +178,10 @@ void writeToBtSd() {
   lcd.setCursor(0, 2);
   lcd.print(millis() / 1000);
   lcd.print(" s");
+  GPSPoll();
+
+  lcd.setCursor(0, 3);
+  lcd.print(GPS.milliseconds);
+  lcd.print(" ms");
   GPSPoll();
 }
