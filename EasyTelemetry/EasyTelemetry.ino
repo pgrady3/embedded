@@ -10,8 +10,8 @@
 #define HALL 4
 #define SD_CS 8
 
-#define WHEEL_CIRC 1.492
-#define WHEEL_TICKS 8
+#define WHEEL_CIRC 1.552
+#define WHEEL_TICKS 9
 #define TICK_DIST (WHEEL_CIRC / WHEEL_TICKS)
 
 #define TARGET_CURRENT 5
@@ -29,10 +29,12 @@ volatile uint32_t distTicks = 0;
 double energyUsed = 0.0;
 double distance = 0.0;
 double currentSpeed = 0.0;
+double currentRPM = 0.0;
 double InaVoltage = 0.0;
 double InaCurrent = 0.0;
 double InaPower = 0;
 double batteryVoltage = 0.0;
+double effScore = 0;
 
 File myFile;
 Adafruit_GPS GPS(&Serial1);
@@ -88,13 +90,15 @@ void updateINA()
   
   double currentInaTime = millis();
   energyUsed += InaPower * (currentInaTime - lastInaMeasurement) / 1000;
-  lastInaMeasurement = currentInaTime;  
+  lastInaMeasurement = currentInaTime;
+
+  effScore = distance / energyUsed * 3600;
 }
 
 void updateSpeed()
 {
   currentSpeed = 1000000.0 / avgdT * WHEEL_CIRC; 
-  if(micros() - lastHallPulse > 2000000)
+  if(micros() - lastHallPulse > 2000000)//if nothing for more than 2 seconds, set speed to zero
     currentSpeed = 0;
   
   distance = distTicks * TICK_DIST;
@@ -165,23 +169,29 @@ void writeToBtSd() {
   GPSPoll();//super hacky bc short GPS buffer
 
   lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(InaVoltage);
-  lcd.print(" V");
-  GPSPoll();
-  
-  lcd.setCursor(0, 1);
-  lcd.print(InaCurrent);
-  lcd.print(" A");
-  GPSPoll();
-  
-  lcd.setCursor(0, 2);
-  lcd.print(millis() / 1000);
-  lcd.print(" s");
-  GPSPoll();
+  LCDWriteFloat(0, 0, InaVoltage, " V");
+  LCDWriteFloat(0, 1, InaCurrent, " A");  
+  LCDWriteInt(0, 3, GPS.milliseconds, " ms");
 
-  lcd.setCursor(0, 3);
-  lcd.print(GPS.milliseconds);
-  lcd.print(" ms");
+  LCDWriteFloat(10, 0, currentSpeed * 3.6, " km/h");
+  LCDWriteFloat(10, 1, InaPower, " W");
+  LCDWriteFloat(8, 3, effScore, " km/kWh");
+}
+
+
+void LCDWriteFloat(uint8_t x, uint8_t y, float data, const char* s2)
+{
+  lcd.setCursor(x, y);
+  lcd.print(data);
+  lcd.print(s2);
   GPSPoll();
 }
+
+void LCDWriteInt(uint8_t x, uint8_t y, uint32_t data, const char* s2)
+{
+  lcd.setCursor(x, y);
+  lcd.print(data);
+  lcd.print(s2);
+  GPSPoll();
+}
+
