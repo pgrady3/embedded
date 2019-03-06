@@ -17,7 +17,8 @@
 
 #define HALL_OVERSAMPLE 4
 
-uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};
+//uint8_t hallToMotor[8] = {255, 255, 255, 255, 255, 255, 255, 255};
+uint8_t hallToMotor[8] = {255, 5, 1, 0, 3, 4, 2, 255};//brunei external geared motor
 
 void setup() {
   Serial.begin(115200);
@@ -40,7 +41,7 @@ void setup() {
 
   pinMode(THROTTLE_PIN, INPUT);
   
-  identifyHalls();
+  //identifyHalls();
 }
 
 void loop() {
