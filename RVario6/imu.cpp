@@ -9,6 +9,8 @@
 
 MPU9250 myIMU(MPU9250_ADDRESS, I2Cport, I2Cclock);
 
+float totalG = 0;
+
 void IMUInit(void)
 {
   byte c = myIMU.readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
@@ -78,9 +80,9 @@ void IMUPoll(void)
 
     // Now we'll calculate the accleration value into actual g's
     // This depends on scale being set
-    myIMU.ax = (float)myIMU.accelCount[0] * myIMU.aRes; // - myIMU.accelBias[0];
-    myIMU.ay = (float)myIMU.accelCount[1] * myIMU.aRes; // - myIMU.accelBias[1];
-    myIMU.az = (float)myIMU.accelCount[2] * myIMU.aRes; // - myIMU.accelBias[2];
+    myIMU.ax = (float)myIMU.accelCount[0] * myIMU.aRes - myIMU.accelBias[0];
+    myIMU.ay = (float)myIMU.accelCount[1] * myIMU.aRes - myIMU.accelBias[1];
+    myIMU.az = (float)myIMU.accelCount[2] * myIMU.aRes - myIMU.accelBias[2];
 
     myIMU.readGyroData(myIMU.gyroCount);  // Read the x/y/z adc values
 
@@ -124,10 +126,46 @@ void IMUPoll(void)
     myIMU.yaw   *= RAD_TO_DEG;
     myIMU.roll *= RAD_TO_DEG;
 
+    totalG = myIMU.ax * myIMU.ax + myIMU.ay * myIMU.ay + myIMU.az * myIMU.az;
+    totalG = sqrt(totalG);
+
     myIMU.count = millis();
     myIMU.sumCount = 0;
     myIMU.sum = 0;
   } // if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
+}
+
+float axOff = 0;
+float xVelo = 0;
+uint32_t lastTime = 0;
+
+void IMUPrint(void)
+{
+  if(axOff == 0)//first run
+  {
+    axOff = myIMU.ax;
+    lastTime = millis();
+    return;
+  }
+  uint32_t curTime = millis();
+  float dt = ((float)curTime - lastTime) / 1000;
+  
+  xVelo += (myIMU.ax - axOff) * 9.8 * dt;
+
+  //printFloat((myIMU.ax - axOff) * 9.8);
+  printFloat(totalG);
+  //printFloat(myIMU.ax);
+  //printFloat(myIMU.ay);
+  //printFloat(myIMU.az);
+  //Serial.println();
+
+  lastTime = curTime;
+}
+
+void printFloat(float f)
+{
+  Serial.print(f, 3);
+  Serial.print(" ");
 }
 
 float IMUPitch(void)
@@ -138,5 +176,10 @@ float IMUPitch(void)
 float IMURoll(void)
 {
   return myIMU.roll;
+}
+
+float IMUGetG(void)
+{
+  return totalG;
 }
 

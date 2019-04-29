@@ -1,0 +1,117 @@
+#include "MS5637.h"
+#include "i2c.h"
+
+#define PREVALT_SIZE 16
+//#define PREVALT_SIZE 50
+
+uint32_t prom[7] = {0};
+int32_t press = 0;
+int32_t temp = 0;
+float AvgAlt = 0;
+float AvgDAlt = 0;
+float PrevAlt[PREVALT_SIZE];
+
+
+void MS5637Init(void)
+{
+	I2CInit();
+	
+	I2CWriteAddrByte(0x1E);//reset
+	_delay_ms(50);
+	
+	SerialPString("\n\n\n\nMS5637 calibration coefficients\n\n\n\n");
+	for(uint8_t i = 0; i < 7; i++)
+	{
+		prom[i] = MS5637Prom(i);
+		SerialPInt(prom[i]);
+		SerialPChar('\n');
+	}
+}
+
+void MS5637Calc(void)//deterministic time, 22ms
+{
+	LED2_TOGGLE;//make the LED flash every time
+	
+	MS5637ConvD1();//begin D1 conversion
+	_delay_ms(10);
+	uint32_t D1 = MS5637ReadADC();//read ADC value
+	
+	MS5637ConvD2();
+	_delay_ms(10);
+	uint32_t D2 = MS5637ReadADC();
+	
+	int32_t dT = D2 - (prom[5]<<8);
+	
+	
+	temp = 2000 + ((dT * prom[6])>>23);
+	
+	int64_t off = (((int64_t)prom[2])<<17) + (((int64_t)prom[4]*(int64_t)dT)>>6);
+	int64_t sens = (prom[1]<<16) + (((int64_t)prom[3] * (int64_t)dT)>>7);
+	press = ((((int64_t)D1 * sens)>>21) - off)>>15;
+	
+	float alt = 44330 * (1 - pow((float)press / 101325.0f, 1.0f/5.255f));
+	
+	if(AvgAlt == 0)
+		AvgAlt = alt;
+		
+	AvgAlt += (alt - AvgAlt) / 32;
+	
+	static uint8_t pos = 0;
+	float dAlt = (AvgAlt - PrevAlt[pos]) * 45 / PREVALT_SIZE;
+	AvgDAlt += (dAlt - AvgDAlt) / 16;
+	
+	PrevAlt[pos] = AvgAlt;
+	pos++;
+	pos %= PREVALT_SIZE;
+	
+	SerialPInt(D1);
+	SerialPChar(' ');
+	SerialPInt(D2);
+	SerialPChar(' ');
+	SerialPInt(dT);
+	SerialPChar(' ');
+	SerialPInt64(off);
+	SerialPChar(' ');
+	SerialPInt64(sens);
+	SerialPChar(' ');
+	SerialPInt(press);
+	SerialPChar(' ');
+	SerialPDouble(alt);
+	SerialPChar(' ');
+	
+	SerialPChar('\n');
+}
+
+int32_t MS5637GetTemp(void)
+{
+	return temp;
+}
+
+int32_t MS5637GetPress(void)
+{
+	return press;
+}
+
+float MS5637GetAlt(void)
+{
+	return AvgAlt;
+}
+
+float MS5637GetDAlt(void)
+{
+	return AvgDAlt;
+}
+
+//since MS5637Calc takes 22ms, it can be used for primitive timing
+void DelayRoughMS(uint16_t ms)
+{
+	ms /= 22;
+	if(ms == 0)//always delay
+		ms = 1;
+		
+	while(ms != 0)
+	{
+		MS5637Calc();
+		ms--;
+	}
+}

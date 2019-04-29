@@ -1,0 +1,12 @@
+#ifndef MS5637_H_
+#define MS5637_H_
+
+void MS5637Init(void);
+void MS5637Calc(void);
+int32_t MS5637GetTemp(void);
+int32_t MS5637GetPress(void);
+float MS5637GetAlt(void);
+float MS5637GetDAlt(void);
+void DelayRoughMS(uint16_t ms);
+
+#endif /* MS5637_H_ */
