@@ -54,7 +54,7 @@ void loop()
 {
   uint32_t curTime = millis();
 
-  if(curTime > baroTime + 20)
+  /*if(curTime > baroTime + 20)
   {
     digitalWrite(LED_B, !digitalRead(LED_B));
     baroTime = curTime;
@@ -77,9 +77,11 @@ void loop()
     //Serial.print(millis());
     Serial.println();
     
-  }
-  ms5611_1.poll();
-  ms5611_2.poll();
+  }*/
+  
+  //ms5611_1.poll();
+  //ms5611_2.poll();
   IMUPoll();
+  IMUPrint();
 }
 
