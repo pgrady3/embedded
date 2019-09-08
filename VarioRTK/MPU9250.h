@@ -251,7 +251,7 @@ int16_t accelCount[3];  // Stores the 16-bit signed accelerometer sensor output
 int16_t gyroCount[3];   // Stores the 16-bit signed gyro sensor output
 int16_t magCount[3];    // Stores the 16-bit signed magnetometer sensor output
 float magCalibration[3] = {0, 0, 0};  // Factory mag calibration and mag bias
-float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0}, magBias[3] = { -93.44, 146.81, -219.11}, magScale[3]  = {1.06, 1.01, 0.94};     // Bias corrections for gyro and accelerometer
+float gyroBias[3] = {1.28, -1.12, -1.08}, accelBias[3] = {0, 0, 0}, magBias[3] = { -93.44, 146.81, -219.11}, magScale[3]  = {1.06, 1.01, 0.94};     // Bias corrections for gyro and accelerometer
 int16_t tempCount;            // temperature raw count output
 float   temperature;          // Stores the MPU9250 gyro internal chip temperature in degrees Celsius
 double Temperature, Pressure; // stores MS5637 pressures sensor pressure and temperature
@@ -322,10 +322,10 @@ void IMUInit()
     getGres();
     getMres();
 
-    accelgyrocalMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
+    //accelgyrocalMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
     Serial.println("accel biases (mg)"); Serial.println(1000.*accelBias[0]); Serial.println(1000.*accelBias[1]); Serial.println(1000.*accelBias[2]);
     Serial.println("gyro biases (dps)"); Serial.println(gyroBias[0]); Serial.println(gyroBias[1]); Serial.println(gyroBias[2]);
-
+    
     delay(100);
 
     initMPU9250();
@@ -379,7 +379,7 @@ void IMUPoll()
   
   // Serial print and/or display at 0.5 s rate independent of data rates
   delt_t = millis() - count;
-  if (delt_t > 500) { // update LCD once per half-second independent of read rate
+  if (delt_t > 50) { // update LCD once per half-second independent of read rate
 
     if (SerialDebug) {
       Serial.print("ax = "); Serial.print((int)1000 * ax);

@@ -99,6 +99,7 @@ void writeToBtSd() {
                      String(GPSVelD)    + "\t" + String(GPSHeading)  + "\t" + String(GPSVAcc)  + "\t" +
                      String(GPSHAcc)  + "\t" + String(baroAlt)  + "\t" + 
                      String(ax)    + "\t" + String(ay)  + "\t" + String(az)  + "\t" +
+                     String(roll)    + "\t" + String(pitch)  + "\t" + String(yaw)  + "\t" +
                      String(millis());
   
   Serial.println(outputStr);//usb
