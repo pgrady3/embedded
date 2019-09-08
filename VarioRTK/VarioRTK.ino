@@ -4,9 +4,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "SparkFun_MS5637_Arduino_Library.h"
-#include "quaternionFilters.h"
 #include "MPU9250.h"
-#include "imu.h"
 
 #define LED1 7
 #define LED2 8
@@ -62,12 +60,11 @@ void loop() {
   if(curTime < loopTime + 100)//if less than 100ms, start over
     return;
 
-  baroPoll();
-  digitalWrite(LED2, !digitalRead(LED2));
   loopTime = curTime;
+  digitalWrite(LED2, !digitalRead(LED2));
   
+  baroPoll();
   writeToBtSd();
-  IMUPrint();
   drawLCD();
 }
 
@@ -90,8 +87,8 @@ void drawLCD() {
   display.setCursor(0,20);
   display.print(GPSFixType);
 
-  display.setCursor(0,30);
-  display.print(IMUGetG());
+  //display.setCursor(0,30);
+  //display.print(IMUGetG());
   
   display.display();
 }
@@ -100,7 +97,9 @@ void writeToBtSd() {
   String outputStr = String(GPSLat)     + "\t" + String(GPSLon)      + "\t" + String(GPSAlt) + "\t" + 
                      String(GPSFixType) + "\t" + String(GPSVelN)     + "\t" + String(GPSVelE) + "\t" + 
                      String(GPSVelD)    + "\t" + String(GPSHeading)  + "\t" + String(GPSVAcc)  + "\t" +
-                     String(GPSHAcc)  + "\t" + String(baroAlt)  + "\t" + String(millis());
+                     String(GPSHAcc)  + "\t" + String(baroAlt)  + "\t" + 
+                     String(ax)    + "\t" + String(ay)  + "\t" + String(az)  + "\t" +
+                     String(millis());
   
   Serial.println(outputStr);//usb
   
