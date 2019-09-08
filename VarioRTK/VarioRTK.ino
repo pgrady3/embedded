@@ -2,7 +2,8 @@
 #include <Wire.h>
 #include "SparkFun_Ublox_Arduino_Library.h"
 #include "GPS.h"
-#include "LiquidCrystal_I2C.h"
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 #define LED1 7
 #define LED2 8
@@ -16,7 +17,13 @@ uint32_t sdOk = 0;
 uint32_t statusReg = 0;
 
 File myFile;
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+#define OLED_ADDR   0x3C
+Adafruit_SSD1306 display(-1);
+
+#if (SSD1306_LCDHEIGHT != 64)
+#error("Height incorrect, please fix Adafruit_SSD1306.h!");
+#endif
 
 void setup() {
   //Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
@@ -34,19 +41,27 @@ void setup() {
 
   myFile = SD.open("data.txt", FILE_WRITE);
 
-  
-    lcd.begin();
+  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   while(1)
   {
-    delay(500);
-    Serial.println("Trying print");
-    lcd.blink();
-    lcd.backlight();
-    lcd.clear();
-    Serial.println("Trying print2");
-    LCDWriteInt(0, 3, 4444, " ms");
-    //delay(1000);
-    //lcd.noBacklight();
+    display.clearDisplay();
+    
+    // display a pixel in each corner of the screen
+    display.drawPixel(0, 0, WHITE);
+    display.drawPixel(127, 0, WHITE);
+    display.drawPixel(0, 63, WHITE);
+    display.drawPixel(127, 63, WHITE);
+    
+    // display a line of text
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.setCursor(27,30);
+    display.print("Hello, world!");
+    
+    // update display with all of the above graphics
+    display.display();
+
+    delay(5000);
   }
 
   GPSInit();
@@ -78,12 +93,3 @@ void writeToBtSd() {
   myFile.flush();
   sdOk = sdWritten;
 }
-
-void LCDWriteInt(uint8_t x, uint8_t y, uint32_t data, const char* s2)
-{
-  lcd.setCursor(x, y);
-  Serial.println("Trying print3");
-  lcd.print(data);
-  lcd.print(s2);
-}
-
