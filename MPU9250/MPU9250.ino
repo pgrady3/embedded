@@ -240,7 +240,6 @@ float aRes, gRes, mRes;      // scale resolutions per LSB for the sensors
   
 bool newMagData = false;
 
-int myLed = 13;
 
 uint16_t Pcal[8];         // calibration constants from MS5637 PROM registers
 unsigned char nCRC;       // calculated check sum to ensure PROM integrity
@@ -252,7 +251,7 @@ int16_t accelCount[3];  // Stores the 16-bit signed accelerometer sensor output
 int16_t gyroCount[3];   // Stores the 16-bit signed gyro sensor output
 int16_t magCount[3];    // Stores the 16-bit signed magnetometer sensor output
 float magCalibration[3] = {0, 0, 0};  // Factory mag calibration and mag bias
-float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0}, magBias[3] = {0, 0, 0}, magScale[3]  = {0, 0, 0};      // Bias corrections for gyro and accelerometer
+float gyroBias[3] = {0, 0, 0}, accelBias[3] = {0, 0, 0}, magBias[3] = {-93.44, 146.81, -219.11}, magScale[3]  = {1.06, 1.01, 0.94};      // Bias corrections for gyro and accelerometer
 int16_t tempCount;            // temperature raw count output
 float   temperature;          // Stores the MPU9250 gyro internal chip temperature in degrees Celsius
 double Temperature, Pressure; // stores MS5637 pressures sensor pressure and temperature
@@ -294,9 +293,6 @@ void setup()
   Wire.begin();
   Serial.begin(38400);
   
-  pinMode(myLed, OUTPUT);
-  digitalWrite(myLed, HIGH);
-  
   delay(1000);
 
     
@@ -307,55 +303,24 @@ void setup()
   delay(1000); 
 
   if (c == 0x71) // WHO_AM_I should always be 0x68
-  {  
-    Serial.println("MPU9250 is online...");
+  {
     
     MPU9250SelfTest(SelfTest); // Start by performing self test and reporting values
-    Serial.print("x-axis self test: acceleration trim within : "); Serial.print(SelfTest[0],1); Serial.println("% of factory value");
-    Serial.print("y-axis self test: acceleration trim within : "); Serial.print(SelfTest[1],1); Serial.println("% of factory value");
-    Serial.print("z-axis self test: acceleration trim within : "); Serial.print(SelfTest[2],1); Serial.println("% of factory value");
-    Serial.print("x-axis self test: gyration trim within : "); Serial.print(SelfTest[3],1); Serial.println("% of factory value");
-    Serial.print("y-axis self test: gyration trim within : "); Serial.print(SelfTest[4],1); Serial.println("% of factory value");
-    Serial.print("z-axis self test: gyration trim within : "); Serial.print(SelfTest[5],1); Serial.println("% of factory value");
-    delay(1000);
+    delay(100);
     
    // get sensor resolutions, only need to do this once
    getAres();
    getGres();
    getMres();
     
-   Serial.println(" Calibrate gyro and accel");
    accelgyrocalMPU9250(gyroBias, accelBias); // Calibrate gyro and accelerometers, load biases in bias registers
    Serial.println("accel biases (mg)"); Serial.println(1000.*accelBias[0]); Serial.println(1000.*accelBias[1]); Serial.println(1000.*accelBias[2]);
    Serial.println("gyro biases (dps)"); Serial.println(gyroBias[0]); Serial.println(gyroBias[1]); Serial.println(gyroBias[2]);
 
-  delay(1000);  
+  delay(100);  
    
   initMPU9250(); 
-  Serial.println("MPU9250 initialized for active data mode...."); // Initialize device for active mode read of acclerometer, gyroscope, and temperature
-  
-  // Read the WHO_AM_I register of the magnetometer, this is a good test of communication
-  byte d = readByte(AK8963_ADDRESS, AK8963_WHO_AM_I);  // Read WHO_AM_I register for AK8963
-  Serial.print("AK8963 "); Serial.print("I AM "); Serial.print(d, HEX); Serial.print(" I should be "); Serial.println(0x48, HEX);
-  delay(1000); 
-  
-  // Get magnetometer calibration from AK8963 ROM
-  initAK8963(magCalibration); Serial.println("AK8963 initialized for active data mode...."); // Initialize device for active mode read of magnetometer
-  
-  magcalMPU9250(magBias, magScale);
-  Serial.println("AK8963 mag biases (mG)"); Serial.println(magBias[0]); Serial.println(magBias[1]); Serial.println(magBias[2]); 
-  Serial.println("AK8963 mag scale (mG)"); Serial.println(magScale[0]); Serial.println(magScale[1]); Serial.println(magScale[2]); 
-  delay(2000); // add delay to see results before serial spew of data
-   
-  if(SerialDebug) {
-//  Serial.println("Calibration values: ");
-  Serial.print("X-Axis sensitivity adjustment value "); Serial.println(magCalibration[0], 2);
-  Serial.print("Y-Axis sensitivity adjustment value "); Serial.println(magCalibration[1], 2);
-  Serial.print("Z-Axis sensitivity adjustment value "); Serial.println(magCalibration[2], 2);
-  }
-  
-  delay(1000);  
-  
+  initAK8963(magCalibration);
   }
   else
   {
@@ -370,15 +335,10 @@ void loop()
   // If intPin goes high, all data registers have new data
    if (readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01) {  // On interrupt, check if data ready interrupt
      readMPU9250Data(MPU9250Data); // INT cleared on any read
- //   readAccelData(accelCount);  // Read the x/y/z adc values
-    
-    // Now we'll calculate the accleration value into actual g's
     ax = (float)MPU9250Data[0]*aRes - accelBias[0];  // get actual g value, this depends on scale being set
     ay = (float)MPU9250Data[1]*aRes - accelBias[1];   
     az = (float)MPU9250Data[2]*aRes - accelBias[2];  
    
- //   readGyroData(gyroCount);  // Read the x/y/z adc values
-
     // Calculate the gyro value into actual degrees per second
     gx = (float)MPU9250Data[4]*gRes;  // get actual gyro value, this depends on scale being set
     gy = (float)MPU9250Data[5]*gRes;  
@@ -500,21 +460,7 @@ void loop()
     
     Serial.print("rate = "); Serial.print((float)sumCount/sum, 2); Serial.println(" Hz");
     }
-   
-  
-    // With these settings the filter is updating at a ~145 Hz rate using the Madgwick scheme and 
-    // >200 Hz using the Mahony scheme even though the display refreshes at only 2 Hz.
-    // The filter update rate is determined mostly by the mathematical steps in the respective algorithms, 
-    // the processor speed (8 MHz for the 3.3V Pro Mini), and the magnetometer ODR:
-    // an ODR of 10 Hz for the magnetometer produce the above rates, maximum magnetometer ODR of 100 Hz produces
-    // filter update rates of 36 - 145 and ~38 Hz for the Madgwick and Mahony schemes, respectively. 
-    // This is presumably because the magnetometer read takes longer than the gyro or accelerometer reads.
-    // This filter update rate should be fast enough to maintain accurate platform orientation for 
-    // stabilization control of a fast-moving robot or quadcopter. Compare to the update rate of 200 Hz
-    // produced by the on-board Digital Motion Processor of Invensense's MPU6050 6 DoF and MPU9150 9DoF sensors.
-    // The 3.3 V 8 MHz Pro Mini is doing pretty well!
 
-    digitalWrite(myLed, !digitalRead(myLed));
     count = millis(); 
     sumCount = 0;
     sum = 0;    
@@ -1025,7 +971,7 @@ void MPU9250SelfTest(float * destination) // Should return percent deviation fro
 	return data;                             // Return data read from slave register
 }
 
-        void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest)
+void readBytes(uint8_t address, uint8_t subAddress, uint8_t count, uint8_t * dest)
 {  
 	Wire.beginTransmission(address);   // Initialize the Tx buffer
 	Wire.write(subAddress);            // Put slave register address in Tx buffer
