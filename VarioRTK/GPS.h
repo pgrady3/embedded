@@ -1,4 +1,4 @@
-#include <SparkFun_Ublox_Arduino_Library.h>
+#include "SparkFun_Ublox_Arduino_Library.h"
 SFE_UBLOX_GPS myGPS;
 
 uint32_t GPSLastUpdate = 0;
@@ -6,7 +6,10 @@ int32_t GPSLat;
 int32_t GPSLon;
 int32_t GPSAlt;
 int32_t GPSFixType;
- 
+int32_t GPSVelN, GPSVelE, GPSVelD;
+int32_t GPSHeading;
+int32_t GPSVAcc;
+int32_t GPSHAcc;
 
 void GPSInit() {
   Serial1.begin(19200); //Ublox RTK
@@ -28,26 +31,16 @@ void GPSPoll() {
   if (!myGPS.getPVT())
     return;
     
-  long latitude = myGPS.getLatitude();
-  Serial.print(F("Lat: "));
-  Serial.print(latitude);
-
-  long longitude = myGPS.getLongitude();
-  Serial.print(F(" Long: "));
-  Serial.print(longitude);
-  Serial.print(F(" (degrees * 10^-7)"));
-
-  long altitude = myGPS.getAltitude();
-  Serial.print(F(" Alt: "));
-  Serial.print(altitude);
-  Serial.print(F(" (mm)"));
-
-  byte SIV = myGPS.getSIV();
-  Serial.print(F(" SIV: "));
-  Serial.print(SIV);
-
-  Serial.println();
-
+  GPSLat = myGPS.getLatitude();
+  GPSLon = myGPS.getLongitude();
+  GPSAlt = myGPS.getAltitude();
+  GPSFixType = myGPS.getFixType() + (myGPS.getCarrierSolutionType() << 4);//19 for floatRTK, 35 for fixedRTK
+  GPSVelN = myGPS.velN;
+  GPSVelE = myGPS.velE;
+  GPSVelD = myGPS.velD;
+  GPSHeading = myGPS.headingOfMotion;
+  GPSVAcc = myGPS.vAcc;
+  GPSHAcc = myGPS.hAcc;
+    
   GPSLastUpdate = millis();
-
 }

@@ -1,5 +1,8 @@
-#include <SparkFun_Ublox_Arduino_Library.h>
+//#include <i2c_t3.h>
+#include <Wire.h>
+#include "SparkFun_Ublox_Arduino_Library.h"
 #include "GPS.h"
+#include "LiquidCrystal_I2C.h"
 
 #define LED1 7
 #define LED2 8
@@ -13,18 +16,11 @@ uint32_t sdOk = 0;
 uint32_t statusReg = 0;
 
 File myFile;
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-
-long latitude;
-long longitude;
-long altitude;
-byte fixType;
-byte RTK;
-long speed;
-long heading;
-
-
-void setup() {  
+void setup() {
+  //Wire.begin(I2C_MASTER, 0x00, I2C_PINS_18_19, I2C_PULLUP_EXT, 400000);
+  Wire.begin();
   Serial.begin(115200);
   SD.begin(SD_CS);
 
@@ -36,6 +32,12 @@ void setup() {
 
   myFile = SD.open("data.txt", FILE_WRITE);
 
+  delay(500);
+  Serial.println("Trying print");
+  lcd.begin();
+  lcd.backlight();
+  lcd.print("Hello, world!");
+
   GPSInit();
 }
 
@@ -44,57 +46,20 @@ void loop() {
 
   GPSPoll();
   
-  if(curTime < loopTime + 200)//if less than 100ms, start over
+  if(curTime < loopTime + 100)//if less than 100ms, start over
     return;
       
   digitalWrite(LED2, !digitalRead(LED2));
   loopTime = curTime;
-
-
-  /*latitude = myGPS.getLatitude();
-  longitude = myGPS.getLongitude();
-  altitude = myGPS.getAltitude();
-  fixType = myGPS.getFixType();
-  RTK = myGPS.getCarrierSolutionType();
-  speed = myGPS.getGroundSpeed();
-  heading = myGPS.getHeading();*/
-
-  /*Serial.print(millis() - curTime);
-  Serial.println(" Read time");
-  
-  Serial.print(F("Lat: "));
-  Serial.print(latitude);
-
-  Serial.print(F(" Long: "));
-  Serial.print(longitude);
-
-  Serial.print(F(" Alt: "));
-  Serial.print(altitude);
-
-  Serial.print(F(" Fix: "));
-  Serial.print(fixType);
-  if(fixType == 0) Serial.print(F("No fix"));
-  else if(fixType == 1) Serial.print(F("Dead reckoning"));
-  else if(fixType == 2) Serial.print(F("2D"));
-  else if(fixType == 3) Serial.print(F("3D"));
-  else if(fixType == 4) Serial.print(F("GNSS+Dead reckoning"));
-
-  Serial.print(" RTK: ");
-  Serial.print(RTK);
-  //if (RTK == 1) Serial.print(F("High precision float fix!"));
-  //if (RTK == 2) Serial.print(F("High precision fix!"));
-
-  Serial.println();*/
   
   writeToBtSd();
 }
 
-
-
 void writeToBtSd() {
-  String outputStr = String(latitude) + " " + String(longitude) + " " + String(altitude) + " " + 
-                     String(fixType) + " " + String(RTK) + " " + String(speed) + " " + 
-                     String(heading) + " " + String(millis());
+  String outputStr = String(GPSLat)     + "\t" + String(GPSLon)      + "\t" + String(GPSAlt) + "\t" + 
+                     String(GPSFixType) + "\t" + String(GPSVelN)     + "\t" + String(GPSVelE) + "\t" + 
+                     String(GPSVelD)    + "\t" + String(GPSHeading)  + "\t" + String(GPSVAcc)  + "\t" +
+                     String(GPSHAcc)  + "\t" + String(millis());
   
   Serial.println(outputStr);//usb
   
