@@ -4,7 +4,7 @@ SFE_UBLOX_GPS myGPS;
 uint32_t GPSLastUpdate = 0;
 int32_t GPSLat;
 int32_t GPSLon;
-int32_t GPSAlt;
+float GPSAlt;
 int32_t GPSFixType;
 int32_t GPSVelN, GPSVelE, GPSVelD;
 int32_t GPSHeading;
@@ -33,8 +33,8 @@ void GPSPoll() {
     
   GPSLat = myGPS.getLatitude();
   GPSLon = myGPS.getLongitude();
-  GPSAlt = myGPS.getAltitude();
-  GPSFixType = myGPS.getFixType() + (myGPS.getCarrierSolutionType() << 4);//19 for floatRTK, 35 for fixedRTK
+  GPSAlt = myGPS.getAltitude() / 1000.0;
+  GPSFixType = myGPS.getFixType() + (myGPS.getCarrierSolutionType() * 10);//1x for floatRTK, 2x for fixedRTK
   GPSVelN = myGPS.velN;
   GPSVelE = myGPS.velE;
   GPSVelD = myGPS.velD;
