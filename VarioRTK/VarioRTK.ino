@@ -65,7 +65,7 @@ void loop() {
   
   baroPoll();
   writeToBtSd();
-  drawLCD();
+  //drawLCD();
 }
 
 void baroPoll() {
@@ -86,6 +86,8 @@ void drawLCD() {
 
   display.setCursor(0,20);
   display.print(GPSFixType);
+  display.print(" sd ");
+  display.print(sdOk);
 
   //display.setCursor(0,30);
   //display.print(IMUGetG());
@@ -95,7 +97,7 @@ void drawLCD() {
 
 void writeToBtSd() {
   String outputStr = String(GPSLat)     + "\t" + String(GPSLon)      + "\t" + String(GPSAlt) + "\t" + 
-                     String(GPSFixType) + "\t" + String(GPSVelN)     + "\t" + String(GPSVelE) + "\t" + 
+                     String(GPSFixType) + "\t" + String(GPSFreq)     + "\t" + String(GPSVelN)     + "\t" + String(GPSVelE) + "\t" + 
                      String(GPSVelD)    + "\t" + String(GPSHeading)  + "\t" + String(GPSVAcc)  + "\t" +
                      String(GPSHAcc)  + "\t" + String(baroAlt)  + "\t" + 
                      String(ax)    + "\t" + String(ay)  + "\t" + String(az)  + "\t" +

@@ -2,6 +2,9 @@
 SFE_UBLOX_GPS myGPS;
 
 uint32_t GPSLastUpdate = 0;
+uint32_t GPSFirstUpdate = 0;
+uint32_t GPSCount = 0;
+uint32_t GPSFreq = 0;
 int32_t GPSLat;
 int32_t GPSLon;
 float GPSAlt;
@@ -25,6 +28,8 @@ void GPSInit() {
     delay(10);
 
   delay(500);
+
+  GPSFirstUpdate = millis();
 }
 
 void GPSPoll() {
@@ -43,4 +48,6 @@ void GPSPoll() {
   GPSHAcc = myGPS.hAcc;
     
   GPSLastUpdate = millis();
+
+  GPSFreq = (GPSLastUpdate - GPSFirstUpdate) / GPSCount++;
 }
