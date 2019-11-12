@@ -10,8 +10,9 @@ clear; close all; clc;
 
 data = importdata('EFXBlueFloat.TXT');
 data = data(5000:end, :);
-%data = data(27800:36400, :); %long thermal 1. Poor centering
-data = data(44800:47700, :);
+%data = data(27800:36400, :); %long thermal 1. Poor centering. South side good
+%data = data(44800:47300, :); %Strong thermal. East side good
+data = data(13100:21200, :); %Thermal with mitch. West side good
 
 lat = data(:, 1) ./ 1e7;
 lon = data(:, 2) ./ 1e7;
@@ -82,41 +83,45 @@ plot(gpsFix);
 
 figure;
 ax1 = subplot(2, 1, 1);
-%plot(elapsed, baroV); hold on;
+
 %plot(elapsed, vZ); hold on;
 plot(elapsed, TEC); hold on;
 plot(elapsed, uncomp);
+plot(elapsed, baroV); hold on;
 %plot(elapsed, TEC);
-legend('gps TEC', 'gps uncomp');  grid on;
+legend('gps TEC', 'gps uncomp', 'baro uncomp');  grid on;
 %plot(elapsed, accDownFilt);
 %plot(elapsed, accDown);
 ylabel('Vario in m/s')
-ylim([-6 6])
+ylim([-3 3])
 
 ax2 = subplot(2, 1, 2);
-plot(elapsed, vtot * 1.943); grid on;
+plot(elapsed, vtot); grid on;
 xlabel('Time in s')
-ylabel('3D V in knots')
+ylabel('3D V in m/s')
 %ylim([15 40])
 
 linkaxes([ax1 ax2], 'x')
 
 TECclip = max(min(TEC, 3), -3);
+%TECclip = max(min(uncomp, 3), -3);
 
 figure;
 scatter3(E, N, -D, 3, TECclip);
-xlabel('East'); ylabel('North'); zlabel('Up');
-axis equal; colorbar; title('Position vs Vario');
+xlabel('East (m)'); ylabel('North (m)'); zlabel('Up (m)');
+axis equal; colorbar; title('Position vs Vario in m/s');
+
+vclip = max(min(vtot, 28), 22);
 
 figure;
-scatter3(E, N, -D, 3, vtot);
+scatter3(E, N, -D, 3, vclip);
 xlabel('East'); ylabel('North'); zlabel('Up');
 axis equal; colorbar; title('Position vs speed');
-% 
-% figure;
-% scatter3(E, N, (1:length(E))', 3);
-% title('Position vs data point');
-% 
-% figure;
-% plot(gpsAlt); grid on;
-% title('Point vs alt');
+
+figure;
+scatter3(E, N, (1:length(E))', 3);
+title('Position vs data point');
+
+figure;
+plot(gpsAlt); grid on;
+title('Point vs alt');
