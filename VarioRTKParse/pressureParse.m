@@ -1,6 +1,6 @@
 clear;clc;close all;
 
-data = importdata('pressureLog.txt');
+data = importdata('pressureLogClamped.txt');
 
 alt1 = data(:, 1);
 alt2 = data(:, 2);

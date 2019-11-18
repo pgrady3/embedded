@@ -12,7 +12,7 @@ data = importdata('EFXBlueFloat.TXT');
 data = data(5000:end, :);
 %data = data(27800:36400, :); %long thermal 1. Poor centering. South side good
 %data = data(44800:47300, :); %Strong thermal. East side good
-data = data(13100:21200, :); %Thermal with mitch. West side good
+%data = data(13100:21200, :); %Thermal with mitch. West side good
 
 lat = data(:, 1) ./ 1e7;
 lon = data(:, 2) ./ 1e7;
@@ -47,6 +47,8 @@ uncomp = smooth(uncomp, 21);
 TEC = gradient(te);
 TEC = smooth(TEC, 21);
 
+gpsComp = movmean(gpsComp, [5 0]);% 10 elements back, zero forwards
+
 baroV = smooth(baroV, 21);
 
 angle = data(:, 17:19) ./ (180 / pi);
@@ -73,6 +75,8 @@ baroV = smooth(baroV, 1);
 % figure;
 % plot(x, y); axis square;
 
+[isCircling, heading] = detectCircling(N, E);
+
 figure;
 yyaxis left;
 plot(baroAlt); hold on;
@@ -86,10 +90,11 @@ ax1 = subplot(2, 1, 1);
 
 %plot(elapsed, vZ); hold on;
 plot(elapsed, TEC); hold on;
-plot(elapsed, uncomp);
-plot(elapsed, baroV); hold on;
+%plot(elapsed, uncomp);
+%plot(elapsed, baroV); hold on;
+plot(elapsed, gpsComp);
 %plot(elapsed, TEC);
-legend('gps TEC', 'gps uncomp', 'baro uncomp');  grid on;
+legend('gps TEC post', 'gps TEC pre');  grid on;
 %plot(elapsed, accDownFilt);
 %plot(elapsed, accDown);
 ylabel('Vario in m/s')
@@ -103,13 +108,20 @@ ylabel('3D V in m/s')
 
 linkaxes([ax1 ax2], 'x')
 
-TECclip = max(min(TEC, 3), -3);
+TECclip = max(min(TEC, 3), -0);
 %TECclip = max(min(uncomp, 3), -3);
 
 figure;
 scatter3(E, N, -D, 3, TECclip);
 xlabel('East (m)'); ylabel('North (m)'); zlabel('Up (m)');
 axis equal; colorbar; title('Position vs Vario in m/s');
+
+gpsCompClip = max(min(gpsComp, 3), -0);
+figure;
+scatter3(E, N, -D, 3, gpsCompClip);
+xlabel('East (m)'); ylabel('North (m)'); zlabel('Up (m)');
+axis equal; colorbar; title('Position vs Live Vario in m/s');
+
 
 vclip = max(min(vtot, 28), 22);
 
@@ -118,10 +130,17 @@ scatter3(E, N, -D, 3, vclip);
 xlabel('East'); ylabel('North'); zlabel('Up');
 axis equal; colorbar; title('Position vs speed');
 
-figure;
-scatter3(E, N, (1:length(E))', 3);
-title('Position vs data point');
+% figure;
+% scatter3(E, N, (1:length(E))', 3);
+% title('Position vs data point');
 
 figure;
-plot(gpsAlt); grid on;
-title('Point vs alt');
+scatter3(E, N, isCircling, 3, isCircling);
+title('Position vs isCircling');
+
+figure;
+plot(elapsed, heading); grid on;
+
+% figure;
+% plot(gpsAlt); grid on;
+% title('Point vs alt');
