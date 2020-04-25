@@ -11,7 +11,7 @@ clear; close all; clc;
 data = importdata('EFXBlueFloat.TXT');
 data = data(5000:end, :);
 %data = data(27800:36400, :); %long thermal 1. Poor centering. South side good
-%data = data(44800:47300, :); %Strong thermal. East side good
+data = data(44800:47300, :); %Strong thermal. East side good
 %data = data(13100:21200, :); %Thermal with mitch. West side good
 
 lat = data(:, 1) ./ 1e7;
